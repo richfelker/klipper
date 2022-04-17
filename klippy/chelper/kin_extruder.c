@@ -116,7 +116,11 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
         return m->start_pos.x + move_get_distance(m, move_time);
     // Apply pressure advance and average over smooth_time
     double area = pa_range_integrate(m, move_time, es->pressure_advance, hst);
-    return m->start_pos.x + area * es->inv_half_smooth_time2 + move_get_distance(m, move_time);
+    double advance = area * es->inv_half_smooth_time2;
+    // Would it be better to apply this limit before integrating?
+    if (es->advance_limit && advance > es->advance_limit)
+        advance = es->advance_limit;
+    return m->start_pos.x + advance + move_get_distance(m, move_time);
 }
 
 void __visible
