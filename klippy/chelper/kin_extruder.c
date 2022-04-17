@@ -101,6 +101,8 @@ pa_range_integrate(struct move *m, double move_time
 struct extruder_stepper {
     struct stepper_kinematics sk;
     double pressure_advance, half_smooth_time, inv_half_smooth_time2;
+    double advance_limit;
+    double travel_retract;
 };
 
 static double
@@ -119,7 +121,8 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
 
 void __visible
 extruder_set_pressure_advance(struct stepper_kinematics *sk
-                              , double pressure_advance, double smooth_time)
+                              , double pressure_advance, double smooth_time
+                              , double advance_limit, double travel_retract)
 {
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
     double hst = smooth_time * .5;
@@ -129,6 +132,8 @@ extruder_set_pressure_advance(struct stepper_kinematics *sk
         return;
     es->inv_half_smooth_time2 = 1. / (hst * hst);
     es->pressure_advance = pressure_advance;
+    es->advance_limit = advance_limit;
+    es->travel_retract = travel_retract;
 }
 
 struct stepper_kinematics * __visible
