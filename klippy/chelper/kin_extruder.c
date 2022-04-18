@@ -52,7 +52,7 @@ extruder_integrate_time(double delta_base, double start_dv, double half_accel
 // Calculate the definitive integral of extruder for a given move
 static double
 pa_move_integrate(struct move *m, double pressure_advance
-                  , double start, double end, double time_offset)
+                  , double start, double end, double time_offset, double tr)
 {
     if (start < 0.)
         start = 0.;
@@ -64,6 +64,8 @@ pa_move_integrate(struct move *m, double pressure_advance
         pressure_advance = 0.;
     double delta_base = pressure_advance * m->start_v;
     double start_dv = pressure_advance * 2. * m->half_accel;
+    if (can_pressure_advance)
+        delta_base += tr;
     // Calculate definitive integral
     double ha = m->half_accel;
     double iext = extruder_integrate(delta_base, start_dv, ha, start, end);
@@ -74,26 +76,26 @@ pa_move_integrate(struct move *m, double pressure_advance
 // Calculate the definitive integral of the extruder over a range of moves
 static double
 pa_range_integrate(struct move *m, double move_time
-                   , double pressure_advance, double hst)
+                   , double pressure_advance, double hst, double tr)
 {
     // Calculate integral for the current move
     double res = 0., start = move_time - hst, end = move_time + hst;
     double start_base = m->start_pos.x;
-    res += pa_move_integrate(m, pressure_advance, start, move_time, start);
-    res -= pa_move_integrate(m, pressure_advance, move_time, end, end);
+    res += pa_move_integrate(m, pressure_advance, start, move_time, start, tr);
+    res -= pa_move_integrate(m, pressure_advance, move_time, end, end, tr);
     // Integrate over previous moves
     struct move *prev = m;
     while (unlikely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
         res += pa_move_integrate(prev, pressure_advance, start
-                                 , prev->move_t, start);
+                                 , prev->move_t, start, tr);
     }
     // Integrate over future moves
     while (unlikely(end > m->move_t)) {
         end -= m->move_t;
         m = list_next_entry(m, node);
-        res -= pa_move_integrate(m, pressure_advance, 0., end, end);
+        res -= pa_move_integrate(m, pressure_advance, 0., end, end, tr);
     }
     return res;
 }
@@ -115,11 +117,13 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
         // Pressure advance not enabled
         return m->start_pos.x + move_get_distance(m, move_time);
     // Apply pressure advance and average over smooth_time
-    double area = pa_range_integrate(m, move_time, es->pressure_advance, hst);
+    double area = pa_range_integrate(m, move_time, es->pressure_advance, hst,
+                                     es->travel_retract);
     double advance = area * es->inv_half_smooth_time2;
     // Would it be better to apply this limit before integrating?
-    if (es->advance_limit && advance > es->advance_limit)
-        advance = es->advance_limit;
+    double limit = es->advance_limit + es->travel_retract;
+    if (es->advance_limit && advance > limit)
+        advance = limit;
     return m->start_pos.x + advance + move_get_distance(m, move_time);
 }
 
