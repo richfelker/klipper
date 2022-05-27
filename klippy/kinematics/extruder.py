@@ -336,14 +336,20 @@ class PrinterExtruder:
     cmd_SET_E_VELOCITY_LIMIT_help = "Set extruder velocity limits"
     def cmd_SET_E_VELOCITY_LIMIT(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
-        velocity = gcmd.get_float('PRINT_VELOCITY', None, above=0.)
-        accel = gcmd.get_float('PRINT_ACCEL', None, above=0.)
-        if velocity is not None:
-            self.max_e_print_velocity = velocity
-        if accel is not None:
-            self.max_e_print_accel = accel
-        gcmd.respond_info("Extruder '%s' velocity limits: print_velocity=%0.6f print_accel=%0.6f"
-                          % (self.name, self.max_e_print_velocity, self.max_e_print_accel))
+        e_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        e_accel = gcmd.get_float('ACCEL', None, above=0.)
+        print_velocity = gcmd.get_float('PRINT_VELOCITY', None, above=0.)
+        print_accel = gcmd.get_float('PRINT_ACCEL', None, above=0.)
+        if e_velocity is not None:
+            self.max_e_velocity = e_velocity
+        if e_accel is not None:
+            self.max_e_accel = e_accel
+        if print_velocity is not None:
+            self.max_e_print_velocity = print_velocity
+        if print_accel is not None:
+            self.max_e_print_accel = print_accel
+        gcmd.respond_info("Extruder '%s' velocity limits: velocity=%0.6f accel=%0.6f print_velocity=%0.6f print_accel=%0.6f"
+                          % (self.name, self.max_e_velocity, self.max_e_accel, self.max_e_print_velocity, self.max_e_print_accel))
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
