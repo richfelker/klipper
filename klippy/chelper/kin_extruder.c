@@ -64,7 +64,8 @@ pa_move_integrate(struct move *m, double pressure_advance
         pressure_advance = 0.;
     double delta_base = pressure_advance * m->start_v;
     double start_dv = pressure_advance * 2. * m->half_accel;
-    if (can_pressure_advance)
+    //if (can_pressure_advance)
+    if (m->start_v || m->half_accel)
         delta_base += tr;
     // Calculate definitive integral
     double ha = m->half_accel;
