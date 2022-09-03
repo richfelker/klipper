@@ -44,6 +44,7 @@ SQRT2 = hypot(1., 1.)
 class LimitedCartKinematics(cartesian.CartKinematics):
     def __init__(self, toolhead, config):
         cartesian.CartKinematics.__init__(self, toolhead, config)
+        self.toolhead = toolhead
         # Setup y axis limits
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.config_max_velocity = max_velocity
@@ -99,7 +100,8 @@ class LimitedCartKinematics(cartesian.CartKinematics):
         max_v = min(x_max_v / x_r, y_max_v / y_r)
         max_a = min(x_max_a / x_r, y_max_a / y_r)
         if self.scale_per_axis:
-            max_a *= move.accel / self.config_max_accel
+            _, toolhead_accel = self.toolhead.get_max_velocity()
+            max_a *= toolhead_accel / self.config_max_accel
         if z_r:
             z_r = abs(z_r)
             max_v = min(max_v, z_max_v / z_r)
