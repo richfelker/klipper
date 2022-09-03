@@ -13,7 +13,8 @@ from extras.danger_options import get_danger_options
 
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
-REPORT_TIME = 0.300
+#REPORT_TIME = 0.300
+REPORT_TIME = 0.1
 RANGE_CHECK_COUNT = 4
 
 
