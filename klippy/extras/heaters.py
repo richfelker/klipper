@@ -60,6 +60,7 @@ class Heater:
         self.config_smooth_time = config.getfloat("smooth_time", 1.0, above=0.0)
         self.smooth_time = self.config_smooth_time
         self.inv_smooth_time = 1.0 / self.smooth_time
+        self.is_shutdown = False
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.0
         self.last_temp_time = 0.0
@@ -129,7 +130,7 @@ class Heater:
         return algos[profile["control"]](profile, self, load_clean)
 
     def set_pwm(self, read_time, value):
-        if self.target_temp <= 0.0:
+        if self.target_temp <= 0. or self.is_shutdown:
             value = 0.0
         if (read_time < self.next_pwm_time or not self.last_pwm_value) and abs(
             value - self.last_pwm_value
@@ -156,6 +157,8 @@ class Heater:
             self.can_extrude = self.smoothed_temp >= self.min_extrude_temp
         # logging.debug("temp: %.3f %f = %f", read_time, temp)
 
+    def _handle_shutdown(self):
+        self.is_shutdown = True
     # External commands
     def get_name(self):
         return self.name
