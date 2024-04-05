@@ -32,6 +32,7 @@ PID_PROFILE_OPTIONS = {
 class Heater:
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
         self.name = config.get_name()
         self.short_name = short_name = self.name.split()[-1]
         self.config = config
