@@ -440,6 +440,10 @@ class PrinterExtruder:
             max_accel * def_max_extrude_ratio,
             above=0.0,
         )
+        self.max_e_print_velocity = config.getfloat(
+            'max_extrude_print_velocity', 9999999.9, above=0.)
+        self.max_e_print_accel = config.getfloat(
+            'max_extrude_print_accel', 9999999.9, above=0.)
         self.max_e_dist = config.getfloat(
             "max_extrude_only_distance", 50.0, minval=0.0
         )
@@ -477,6 +481,13 @@ class PrinterExtruder:
             self.cmd_ACTIVATE_EXTRUDER,
             desc=self.cmd_ACTIVATE_EXTRUDER_help,
         )
+        if self.name == 'extruder':
+            gcode.register_mux_command("SET_EXTRUDER_VELOCITY_LIMIT", "EXTRUDER",
+                                       None, self.cmd_SET_E_VELOCITY_LIMIT,
+                                       desc=self.cmd_SET_E_VELOCITY_LIMIT_help)
+        gcode.register_mux_command("SET_EXTRUDER_VELOCITY_LIMIT", "EXTRUDER",
+                                   self.name, self.cmd_SET_E_VELOCITY_LIMIT,
+                                   desc=self.cmd_SET_E_VELOCITY_LIMIT_help)
 
     def link_extruder_stepper(self, extruder_stepper):
         if extruder_stepper not in self.extruder_steppers:
@@ -551,7 +562,10 @@ class PrinterExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area)
             )
-
+        elif axis_r != 0:
+            inv_extrude_r = 1. / abs(axis_r)
+            move.limit_speed(self.max_e_print_velocity * inv_extrude_r,
+                             self.max_e_print_accel * inv_extrude_r)
     def calc_junction(self, prev_move, move):
         diff_r = move.axes_r[3] - prev_move.axes_r[3]
         if diff_r:
@@ -629,6 +643,23 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, sum(self.last_position))
         self.printer.send_event("extruder:activate_extruder")
+    cmd_SET_E_VELOCITY_LIMIT_help = "Set extruder velocity limits"
+    def cmd_SET_E_VELOCITY_LIMIT(self, gcmd):
+        toolhead = self.printer.lookup_object('toolhead')
+        e_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        e_accel = gcmd.get_float('ACCEL', None, above=0.)
+        print_velocity = gcmd.get_float('PRINT_VELOCITY', None, above=0.)
+        print_accel = gcmd.get_float('PRINT_ACCEL', None, above=0.)
+        if e_velocity is not None:
+            self.max_e_velocity = e_velocity
+        if e_accel is not None:
+            self.max_e_accel = e_accel
+        if print_velocity is not None:
+            self.max_e_print_velocity = print_velocity
+        if print_accel is not None:
+            self.max_e_print_accel = print_accel
+        gcmd.respond_info("Extruder '%s' velocity limits: velocity=%0.6f accel=%0.6f print_velocity=%0.6f print_accel=%0.6f"
+                          % (self.name, self.max_e_velocity, self.max_e_accel, self.max_e_print_velocity, self.max_e_print_accel))
 
 
 # Dummy extruder class used when a printer has no extruder at all
