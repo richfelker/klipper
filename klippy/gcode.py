@@ -590,7 +590,7 @@ class GCodeIO:
     def _respond_raw(self, msg):
         if self.pipe_is_active:
             try:
-                os.write(self.fd, (msg + "\n").encode())
+                os.write(self.fd, (msg + "\n").encode(encoding="UTF-8"))
             except os.error:
                 logging.exception("Write g-code response")
                 self.pipe_is_active = False
