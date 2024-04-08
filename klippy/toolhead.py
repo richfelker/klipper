@@ -57,9 +57,12 @@ class Move:
 
     def limit_speed(self, speed, accel):
         speed2 = speed**2
+        self.limit_speed2(speed2, accel)
+        if speed2 < self.max_cruise_v2:
+            self.min_move_t = self.move_d / speed
+    def limit_speed2(self, speed2, accel):
         if speed2 < self.max_cruise_v2:
             self.max_cruise_v2 = speed2
-            self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)

@@ -131,6 +131,11 @@ class DeltaKinematics:
         )
         self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.0)
         self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.0)
+        # Set limit factor for speed near edges
+        self.weighted_v2_limit = (self.max_velocity**2
+            * self.radius**2 / (self.min_arm_length**2 - self.radius**2))
+        self.weighted_accel_limit = (self.max_accel**2
+            * self.radius**2 / (self.min_arm_length**2 - self.radius**2))
         self.set_position([0.0, 0.0, 0.0], ())
         self.supports_dual_carriage = False
 
@@ -196,17 +201,29 @@ class DeltaKinematics:
             limit_xy2 = -1.0
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
-        extreme_xy2 = max(
-            end_xy2, move.start_pos[0] ** 2 + move.start_pos[1] ** 2
-        )
-        if extreme_xy2 > self.slow_xy2:
-            r = 0.5
-            if extreme_xy2 > self.very_slow_xy2:
-                r = 0.25
-            move.limit_speed(self.max_velocity * r, self.max_accel * r)
-            limit_xy2 = -1.0
-        self.limit_xy2 = min(limit_xy2, self.slow_xy2)
 
+        max_proj = 0
+        p = move.start_pos
+        q = move.end_pos
+        if (q[0] == p[0] or q[1] == p[1]):
+            return
+        for t in self.towers:
+            proj = abs(sum([(t[i]-p[i]) * (q[i]-p[i]) for i in [0,1]]))
+            if proj > max_proj:
+                max_proj = proj
+            proj = abs(sum([(t[i]-q[i]) * (q[i]-p[i]) for i in [0,1]]))
+            if proj > max_proj:
+                max_proj = proj
+        x2 = max_proj**2 / sum([(q[i]-p[i])*(q[i]-p[i]) for i in [0,1]])
+        l = self.min_arm_length
+        ratio = (l**2 - x2) / x2
+        v2_limit = ratio * self.weighted_v2_limit
+        # a_limit = ratio * self.weighted_accel_limit
+        a_limit = self.max_accel
+        move.limit_speed2(v2_limit, a_limit)
+
+        limit_xy2 = -1.
+        # self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def get_status(self, eventtime):
         return {
             "homed_axes": "" if self.need_home else "xyz",
