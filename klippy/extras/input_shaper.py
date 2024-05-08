@@ -539,7 +539,7 @@ class InputShaper:
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.toolhead = None
         self.extruders = []
-        self.exact_mode = 0
+        self.exact_mode = 1
         self.config_extruder_names = config.getlist("enabled_extruders", [])
         self.shaper_factory = ShaperFactory()
         self.shapers = [
