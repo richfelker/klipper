@@ -18,7 +18,8 @@ MAX_SHAPER_FREQ = 150.0
 
 TEST_DAMPING_RATIOS = [0.075, 0.1, 0.15]
 
-AUTOTUNE_SHAPERS = [
+AUTOTUNE_SHAPERS = ["zv", "mzv", "ei", "2hump_ei", "3hump_ei"]
+NO_AUTOTUNE_SHAPERS = [
     "smooth_zv",
     "smooth_mzv",
     "smooth_ei",
