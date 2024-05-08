@@ -50,6 +50,10 @@ Printer is shutdown
 """
 
 
+class WaitInterruption(gcode.CommandError):
+    pass
+
+
 class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
@@ -373,7 +377,9 @@ class Printer:
             self.run_result = result
         self.reactor.end()
 
-    def wait_while(self, condition_cb):
+    wait_interrupted = WaitInterruption
+
+    def wait_while(self, condition_cb, error_on_cancel=True):
         """
         receives a callback
         waits until callback returns False
@@ -384,7 +390,10 @@ class Printer:
         eventtime = self.reactor.monotonic()
         while condition_cb(eventtime):
             if self.is_shutdown() or counter != gcode.get_interrupt_counter():
-                return
+                if error_on_cancel:
+                    raise WaitInterruption("Command interrupted")
+                else:
+                    return
             eventtime = self.reactor.pause(eventtime + 1.0)
 
 
