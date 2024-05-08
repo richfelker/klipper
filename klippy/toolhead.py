@@ -90,8 +90,8 @@ class Move:
         junction_cos_theta = max(junction_cos_theta, -0.999999)
         sin_theta_d2 = math.sqrt(0.5 * (1.0 - junction_cos_theta))
         R_jd = sin_theta_d2 / (1.0 - sin_theta_d2)
-        if (R_jd < 1.0):
-            R_jd = 1.0
+        # if (R_jd < 1.0):
+        #     R_jd = 1.0
         R_jd *= R_jd
         # Approximated circle must contact moves no further away than mid-move
         tan_theta_d2 = sin_theta_d2 / math.sqrt(
