@@ -135,8 +135,7 @@ class ControlMPC:
         if self.toolhead is not None:
             extruder = self.toolhead.get_extruder()
             if (
-                hasattr(extruder, "extruder_stepper")
-                and extruder.get_heater() == self.heater
+                extruder.get_heater() == self.heater
             ):
                 pos_prev = extruder.find_past_position(read_time - dt)
                 pos = extruder.find_past_position(read_time)
