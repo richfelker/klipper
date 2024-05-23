@@ -204,11 +204,6 @@ class FirmwareRetraction:
             gcmd.respond_info(
                 "Retraction was cleared. zhop is undone on next move."
             )
-        else:
-            gcmd.respond_info(
-                "WARNING: Printer is not retracted. \
-                Command has been ignored!"
-            )
 
     # Helper to clear retraction
     def _execute_clear_retraction(self):
@@ -232,12 +227,7 @@ class FirmwareRetraction:
             # Store z_hop_height for moves when retracted until next G11
             self.actual_zhop = self.z_hop_height
             # Check if FW retraction enabled
-            if self.retract_length == 0.0 and self.z_hop_height == 0.0:
-                gcmd.respond_info(
-                    "Retraction length and z_hop zero. Firmware retraction \
-                    disabled. Command ignored!"
-                )
-            else:
+            if self.retract_length != 0.0 or self.z_hop_height != 0.0:
                 if self.retract_length > 0.0:
                     retract_gcode = ("G1 E-{:.5f} F{}\n").format(
                         self.retract_length, int(self.retract_speed * 60)
@@ -269,9 +259,6 @@ class FirmwareRetraction:
                     # moves in eiter absolute or relative mode
                     self._unregister_G1()
 
-        else:
-            gcmd.respond_info("Printer is already retracted. Command ignored!")
-
     # GCode Command G11 to perform filament unretraction
     def cmd_G11(self, gcmd):
         unretract_gcode = ""  # Reset unretract string
@@ -279,13 +266,8 @@ class FirmwareRetraction:
 
         if self.is_retracted:  # Check if the filament is retracted
             if (
-                self.unretract_length == 0.0 and self.actual_zhop == 0.0
+                self.unretract_length != 0.0 or self.actual_zhop != 0.0
             ):  # Check if FW retraction enabled
-                gcmd.respond_info(
-                    "Retraction length zero. Firmware retraction \
-                    disabled. Command ignored!"
-                )
-            else:
                 if self.unretract_length > 0.0:
                     unretract_gcode = ("G1 E{:.5f} F{}\n").format(
                         self.unretract_length, int(self.unretract_speed * 60)
@@ -313,8 +295,6 @@ class FirmwareRetraction:
                 self.is_retracted = (
                     False  # Set the flag to filament unretracted
                 )
-        else:
-            gcmd.respond_info("Printer is not retracted. Command ignored!")
 
     # Register new G1 command handler
     def _unregister_G1(self):
