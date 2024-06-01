@@ -92,7 +92,7 @@ class Move:
         R_jd = sin_theta_d2 / (1.0 - sin_theta_d2)
         # if (R_jd < 1.0):
         #     R_jd = 1.0
-        R_jd *= R_jd
+        R_jd *= math.sqrt(R_jd)
         # Approximated circle must contact moves no further away than mid-move
         tan_theta_d2 = sin_theta_d2 / math.sqrt(
             0.5 * (1.0 + junction_cos_theta)
@@ -754,7 +754,7 @@ class ToolHead:
 
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
-        self.equilateral_corner_v2 = scv2 * (math.sqrt(2.0) - 1.0)**2
+        self.equilateral_corner_v2 = scv2 * (math.sqrt(2.0) - 1.0)**1.5
         self.max_accel_to_decel = self.max_accel * (1.0 - self.min_cruise_ratio)
 
     def cmd_G4(self, gcmd):
