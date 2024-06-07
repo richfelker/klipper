@@ -367,7 +367,8 @@ class MpcCalibrate:
         control = TuningControl(self.heater)
         old_control = self.heater.set_control(control)
         try:
-            ambient_temp = self.await_ambient(gcmd, control, threshold_temp)
+            ambient_temp = ( self.await_ambient(gcmd, control, threshold_temp) if gcmd.get("AMBIENT", None) is None
+                else gcmd.get_float("AMBIENT", AMBIENT_TEMP) )
             samples = self.heatup_test(gcmd, target_temp, control)
             first_res = self.process_first_pass(
                 samples,
