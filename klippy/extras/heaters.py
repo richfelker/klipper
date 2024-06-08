@@ -363,6 +363,9 @@ class Heater:
                 ] = config_section.getfloat(
                     "filament_heat_capacity", above=0.0, default=0.0
                 )
+                temp_profile["maximum_retract"] = config_section.getfloat(
+                    "maximum_retract", above=0.0, default=2.0
+                )
 
                 ambient_sensor_name = config_section.get(
                     "ambient_temp_sensor", None
