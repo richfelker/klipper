@@ -158,25 +158,26 @@ class ControlMPC:
         # Extruder position
         extrude_speed_prev = 0.0
         extrude_speed_next = 0.0
-        if self.toolhead is None:
-            self.toolhead = self.printer.lookup_object("toolhead")
-        if self.toolhead is not None:
-            extruder = self.toolhead.get_extruder()
-            if (
-                hasattr(extruder, "find_past_position")
-                and extruder.get_heater() == self.heater
-            ):
-                pos_prev = self.last_extrude_pos
-                pos = extruder.find_past_position(read_time)
-                if pos_prev is None:
-                    pos_prev = pos
-                self.last_extrude_pos = pos
-                pos_next = max(
-                    pos - self.const_maximum_retract,
-                    extruder.find_past_position(read_time + dt),
-                )
-                extrude_speed_prev = (pos - pos_prev) / dt
-                extrude_speed_next = (pos_next - pos) / dt
+        if target_temp != 0.0:
+            if self.toolhead is None:
+                self.toolhead = self.printer.lookup_object("toolhead")
+            if self.toolhead is not None:
+                extruder = self.toolhead.get_extruder()
+                if (
+                    hasattr(extruder, "find_past_position")
+                    and extruder.get_heater() == self.heater
+                ):
+                    pos_prev = self.last_extrude_pos
+                    pos = extruder.find_past_position(read_time)
+                    if pos_prev is None:
+                        pos_prev = pos
+                    self.last_extrude_pos = pos
+                    pos_next = max(
+                        pos - self.const_maximum_retract,
+                        extruder.find_past_position(read_time + dt),
+                    )
+                    extrude_speed_prev = (pos - pos_prev) / dt
+                    extrude_speed_next = (pos_next - pos) / dt
 
         # Modulate ambient transfer coefficient with fan speed
         ambient_transfer = self.const_ambient_transfer
