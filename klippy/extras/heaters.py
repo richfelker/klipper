@@ -7,7 +7,12 @@ import collections
 import os
 import logging
 import threading
-from .control_mpc import ControlMPC
+from .control_mpc import (
+    ControlMPC,
+    FILAMENT_TEMP_SRC_AMBIENT,
+    FILAMENT_TEMP_SRC_FIXED,
+    FILAMENT_TEMP_SRC_SENSOR,
+)
 
 
 ######################################################################
@@ -366,6 +371,24 @@ class Heater:
                 temp_profile["maximum_retract"] = config_section.getfloat(
                     "maximum_retract", above=0.0, default=2.0
                 )
+
+                filament_temp_src_raw = config_section.get(
+                    "filament_temperature_source", "ambient"
+                )
+                temp = filament_temp_src_raw.lower().strip()
+                if temp == "sensor":
+                    filament_temp_src = (FILAMENT_TEMP_SRC_SENSOR,)
+                elif temp == "ambient":
+                    filament_temp_src = (FILAMENT_TEMP_SRC_AMBIENT,)
+                else:
+                    try:
+                        value = float(temp)
+                    except ValueError:
+                        raise config_section.error(
+                            f"Unable to parse option 'filament_temperature_source' in section '{config_section.get_name()}'"
+                        )
+                    filament_temp_src = (FILAMENT_TEMP_SRC_FIXED, value)
+                temp_profile["filament_temp_src"] = filament_temp_src
 
                 ambient_sensor_name = config_section.get(
                     "ambient_temp_sensor", None
