@@ -30,7 +30,6 @@ class ControlMPC:
         self.last_loss_filament = 0.0
         self.last_time = 0.0
         self.last_temp_time = 0.0
-        self.last_extrude_pos = None
 
         self.printer = heater.printer
         self.toolhead = None
@@ -152,7 +151,7 @@ class ControlMPC:
             return
 
         dt = read_time - self.last_temp_time
-        if self.last_temp_time == 0.0:
+        if self.last_temp_time == 0.0 or dt < 0.0 or dt > 1.0:
             dt = 0.1
 
         # Extruder position
@@ -167,17 +166,15 @@ class ControlMPC:
                     hasattr(extruder, "find_past_position")
                     and extruder.get_heater() == self.heater
                 ):
-                    pos_prev = self.last_extrude_pos
                     pos = extruder.find_past_position(read_time)
-                    if pos_prev is None:
-                        pos_prev = pos
-                    self.last_extrude_pos = pos
-                    pos_next = max(
-                        pos - self.const_maximum_retract,
-                        extruder.find_past_position(read_time + dt),
-                    )
-                    extrude_speed_prev = (pos - pos_prev) / dt
-                    extrude_speed_next = (pos_next - pos) / dt
+
+                    pos_prev = extruder.find_past_position(read_time - dt)
+                    pos_moved = max(-self.const_maximum_retract, pos - pos_prev)
+                    extrude_speed_prev = pos_moved / dt
+
+                    pos_next = extruder.find_past_position(read_time + dt)
+                    pos_move = max(-self.const_maximum_retract, next_pos - pos)
+                    extrude_speed_next = pos_move / dt
 
         # Modulate ambient transfer coefficient with fan speed
         ambient_transfer = self.const_ambient_transfer
