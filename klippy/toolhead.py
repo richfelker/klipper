@@ -97,9 +97,11 @@ class Move:
         tan_theta_d2 = sin_theta_d2 / math.sqrt(
             0.5 * (1.0 + junction_cos_theta)
         )
-        move_centripetal_v2 = 0.5 * self.move_d * tan_theta_d2 * self.accel
+        move_centripetal_v2 = (
+            0.5 * self.move_d * tan_theta_d2 * max(self.toolhead.min_centripetal_accel, self.accel)
+        )
         prev_move_centripetal_v2 = (
-            0.5 * prev_move.move_d * tan_theta_d2 * prev_move.accel
+            0.5 * prev_move.move_d * tan_theta_d2 * max(self.toolhead.min_centripetal_accel, prev_move.accel)
         )
         # Apply limits
         self.max_start_v2 = min(
@@ -266,6 +268,9 @@ class ToolHead:
         # Velocity and acceleration control
         self.max_velocity = config.getfloat("max_velocity", above=0.0)
         self.max_accel = config.getfloat("max_accel", above=0.0)
+        self.min_centripetal_accel = 0
+        if config.getfloat("centripetal_accel", None) is not None:
+            self.min_centripetal_accel = config.getfloat("centripetal_accel", minval=0.0)
         min_cruise_ratio = 0.5
         if config.getfloat("minimum_cruise_ratio", None) is None:
             req_accel_to_decel = config.getfloat(
@@ -771,6 +776,7 @@ class ToolHead:
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         max_velocity = gcmd.get_float("VELOCITY", None, above=0.0)
         max_accel = gcmd.get_float("ACCEL", None, above=0.0)
+        min_centripetal_accel = gcmd.get_float("CENTRIPETAL_ACCEL", None, minval=0.0)
         square_corner_velocity = gcmd.get_float(
             "SQUARE_CORNER_VELOCITY", None, minval=0.0
         )
@@ -793,6 +799,8 @@ class ToolHead:
             self.max_velocity = max_velocity
         if max_accel is not None:
             self.max_accel = max_accel
+        if min_centripetal_accel is not None:
+            self.min_centripetal_accel = min_centripetal_accel
         if square_corner_velocity is not None:
             self.square_corner_velocity = square_corner_velocity
         if min_cruise_ratio is not None:
