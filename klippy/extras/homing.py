@@ -330,12 +330,13 @@ class Homing:
                     rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)
                 ]
                 self.toolhead.set_position(startpos)
-                print_time = self.toolhead.get_last_move_time()
-                for endstop in endstops:
-                    # re-querying a tmc endstop seems to reset the state
-                    # otherwise it triggers almost immediately upon second home
-                    # this seems to be an adequate substitute for a 2 second dwell.
-                    endstop[0].query_endstop(print_time)
+                if hi.use_sensorless_homing:
+                    print_time = self.toolhead.get_last_move_time()
+                    for endstop in endstops:
+                        # re-querying a tmc endstop seems to reset the state
+                        # otherwise it triggers almost immediately upon second home
+                        # this seems to be an adequate substitute for a 2 second dwell.
+                        endstop[0].query_endstop(print_time)
                 hmove = HomingMove(self.printer, endstops)
                 hmove.homing_move(homepos, hi.second_homing_speed)
                 if hmove.check_no_movement() is not None:
