@@ -121,7 +121,7 @@ trapq_append(struct trapq *tq, double print_time
              , double accel_t, double cruise_t, double decel_t
              , double start_pos_x, double start_pos_y, double start_pos_z
              , double axes_r_x, double axes_r_y, double axes_r_z
-             , double start_v, double cruise_v, double accel)
+             , double start_v, double cruise_v, double accel, double pa)
 {
     struct coord start_pos = { .x=start_pos_x, .y=start_pos_y, .z=start_pos_z };
     struct coord axes_r = { .x=axes_r_x, .y=axes_r_y, .z=axes_r_z };
@@ -133,6 +133,7 @@ trapq_append(struct trapq *tq, double print_time
         m->half_accel = .5 * accel;
         m->start_pos = start_pos;
         m->axes_r = axes_r;
+        m->pa = pa;
         trapq_add_move(tq, m);
 
         print_time += accel_t;
@@ -146,6 +147,7 @@ trapq_append(struct trapq *tq, double print_time
         m->half_accel = 0.;
         m->start_pos = start_pos;
         m->axes_r = axes_r;
+        m->pa = pa;
         trapq_add_move(tq, m);
 
         print_time += cruise_t;
@@ -159,6 +161,7 @@ trapq_append(struct trapq *tq, double print_time
         m->half_accel = -.5 * accel;
         m->start_pos = start_pos;
         m->axes_r = axes_r;
+        m->pa = pa;
         trapq_add_move(tq, m);
     }
 }

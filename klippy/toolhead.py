@@ -455,6 +455,7 @@ class ToolHead:
                     move.start_v,
                     move.cruise_v,
                     move.accel,
+                    0.0,
                 )
             if move.axes_d[3]:
                 self.extruder.move(next_move_time, move)

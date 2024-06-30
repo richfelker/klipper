@@ -89,6 +89,7 @@ class ManualStepper:
             0.0,
             cruise_v,
             accel,
+            0.0,
         )
         self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
         self.rail.generate_steps(self.next_cmd_time)

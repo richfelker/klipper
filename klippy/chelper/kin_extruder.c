@@ -40,12 +40,8 @@ pa_move_integrate(const struct move *m, int axis
                   , double t0, const smoother_antiderivatives *ad
                   , double *pa_velocity_integral)
 {
-    // Calculate base position and velocity with pressure advance
-    int can_pressure_advance = m->axes_r.x > 0. || m->axes_r.y > 0.;
-
-    // Calculate definitive integral
-    if (can_pressure_advance)
-        *pa_velocity_integral += integrate_velocity(m, axis, t0, ad);
+    if (m->pa)
+        *pa_velocity_integral += m->pa * integrate_velocity(m, axis, t0, ad);
 }
 
 // Calculate the definitive integral of the extruder over a range of moves
@@ -154,16 +150,16 @@ double __visible
 pressure_advance_linear_model_func(double position, double pa_velocity
                                    , struct pressure_advance_params *pa_params)
 {
-    return position + pa_velocity * pa_params->pressure_advance;
+    return position + pa_velocity;
 }
 
 double __visible
 pressure_advance_tanh_model_func(double position, double pa_velocity
                                  , struct pressure_advance_params *pa_params)
 {
-    position += pa_params->linear_advance * pa_velocity;
+    position += pa_velocity;
     if (pa_params->linear_offset) {
-        double rel_velocity = pa_velocity / pa_params->linearization_velocity;
+        double rel_velocity = pa_velocity / pa_params->linear_advance / pa_params->linearization_velocity;
         position += pa_params->linear_offset * tanh(rel_velocity);
     }
     return position;
@@ -173,9 +169,9 @@ double __visible
 pressure_advance_recipr_model_func(double position, double pa_velocity
                                    , struct pressure_advance_params *pa_params)
 {
-    position += pa_params->linear_advance * pa_velocity;
+    position += pa_velocity;
     if (pa_params->linear_offset) {
-        double rel_velocity = pa_velocity / pa_params->linearization_velocity;
+        double rel_velocity = pa_velocity / pa_params->linear_advance / pa_params->linearization_velocity;
         position += pa_params->linear_offset * (1. - 1. / (1. + rel_velocity));
     }
     return position;

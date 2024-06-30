@@ -195,6 +195,7 @@ class ExtruderStepper:
         self.pa_model = config.getchoice(
             "pressure_advance_model", self.pa_models, PALinearModel.name
         )(config)
+        self.pressure_advance = self.pa_model.get_pa_params()[0]
         self.smoother = ExtruderSmoother(config, self.pa_model)
         self.pressure_advance_time_offset = config.getfloat(
             "pressure_advance_time_offset", 0.0, minval=-0.2, maxval=0.2
@@ -351,6 +352,7 @@ class ExtruderStepper:
         if pa_model_name != self.pa_model.name:
             pa_model = self.pa_models[pa_model_name]()
         pa_model.update(gcmd)
+        self.pressure_advance = self.pa_model.get_pa_params()[0]
         self.smoother.update(gcmd)
         time_offset = gcmd.get_float(
             "TIME_OFFSET",
@@ -582,9 +584,11 @@ class PrinterExtruder:
         if move.is_kinematic_move:
             # Regular kinematic move with extrusion
             extr_r = [math.copysign(r * r, axis_r) for r in move.axes_r[:3]]
+            pressure_advance = self.extruder_steppers[0].pressure_advance
         else:
             # Extrude-only move, do not apply pressure advance
             extr_r = [0.0, 0.0, axis_r]
+            pressure_advance = 0.0
         self.trapq_append(
             self.trapq,
             print_time,
@@ -600,6 +604,7 @@ class PrinterExtruder:
             start_v,
             cruise_v,
             accel,
+            pressure_advance,
         )
         extr_d = abs(move.axes_d[3])
         for i in range(3):
